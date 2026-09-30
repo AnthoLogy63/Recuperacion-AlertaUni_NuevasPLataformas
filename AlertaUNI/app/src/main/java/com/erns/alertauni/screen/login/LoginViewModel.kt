@@ -58,6 +58,22 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    // DEMO (rama demo/local-run): entra sin Google/Supabase con un rol fijo.
+    fun startDemoSession(userType: String) {
+        viewModelScope.launch {
+            dataStoreHelper.saveEmail(com.erns.alertauni.data.demo.DemoConfig.EMAIL)
+            if (userType == "PROFESSOR") {
+                dataStoreHelper.setFirstname("Rosa")
+                dataStoreHelper.setSurname("Quispe")
+            } else {
+                dataStoreHelper.setFirstname("Ana")
+                dataStoreHelper.setSurname("Torres")
+            }
+            dataStoreHelper.setUserType(userType)
+            _authState.value = AuthState.Authenticated
+        }
+    }
+
     fun startSessionWithGoogle(context: Context) {
         Log.d(TAG, "Iniciando sesión con Google...")
         val credentialManager = CredentialManager.create(context)

@@ -64,6 +64,7 @@ fun LoginScreen(
     LoginLayout(
         rememberMe = rememberMe.value,
         onRememberMeChange = { viewModel.setRememberMe(it) },
+        onDemoLogin = { viewModel.startDemoSession(it) },
         btnAutenticar = btnAutenticar
     )
 
@@ -73,6 +74,7 @@ fun LoginScreen(
 fun LoginLayout(
     rememberMe: Boolean,
     onRememberMeChange: (Boolean) -> Unit,
+    onDemoLogin: (String) -> Unit,
     btnAutenticar: () -> Unit
 ) {
 
@@ -125,6 +127,18 @@ fun LoginLayout(
                 onCheckedChange = onRememberMeChange
             )
             Text("Recordar cuenta", modifier = Modifier.padding(start = 2.dp))
+        }
+
+        // DEMO (rama demo/local-run): accesos sin backend
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("MODO DEMO (sin backend)", fontSize = 12.sp, color = Color.Gray)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            androidx.compose.material3.Button(onClick = { onDemoLogin("PROFESSOR") }) {
+                Text("Entrar como Docente")
+            }
+            androidx.compose.material3.Button(onClick = { onDemoLogin("STUDENT") }) {
+                Text("Entrar como Estudiante")
+            }
         }
 
     }

@@ -29,48 +29,48 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPostRepository(
-        postRepositoryImpl: PostRepositoryImpl
+        postRepositoryImpl: com.erns.alertauni.data.demo.FakePostRepository
     ): PostRepository
 
     @Binds
     @Singleton
     abstract fun bindCommentRepository(
-        commentRepositoryImpl: CommentRepositoryImpl
+        commentRepositoryImpl: com.erns.alertauni.data.demo.FakeCommentRepository
     ): CommentRepository
 
     @Binds
     @Singleton
     abstract fun bindAuthRepository(
-        authRepositoryImpl: AuthRepositoryImpl
+        authRepositoryImpl: com.erns.alertauni.data.demo.FakeAuthRepository
     ): AuthRepository
 
     @Binds
     @Singleton
     abstract fun bindAccountRepository(
-        accountRepositoryImpl: AccountRepositoryImpl
+        accountRepositoryImpl: com.erns.alertauni.data.demo.FakeAccountRepository
     ): AccountRepository
 
     @Binds
     @Singleton
     abstract fun bindCourseRepository(
-        courseRepositoryImpl: CourseRepositoryImpl
+        courseRepositoryImpl: com.erns.alertauni.data.demo.FakeCourseRepository
     ): CourseRepository
 
     @Binds
     @Singleton
     abstract fun bindStudentRepository(
-        studentRepositoryImpl: StudentRepositoryImpl
+        studentRepositoryImpl: com.erns.alertauni.data.demo.FakeStudentRepository
     ): StudentRepository
 
     @Binds
     @Singleton
     abstract fun bindContactRepository(
-        contactRepositoryImpl: ContactRepositoryImpl
+        contactRepositoryImpl: com.erns.alertauni.data.demo.FakeContactRepository
     ): ContactRepository
 
     @Binds
     @Singleton
     abstract fun bindAnnounceRepository(
-        announceRepositoryImpl: AnnounceRepositoryImpl
+        announceRepositoryImpl: com.erns.alertauni.data.demo.FakeAnnounceRepository
     ): AnnounceRepository
 }
