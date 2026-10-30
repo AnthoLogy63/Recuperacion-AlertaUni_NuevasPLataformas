@@ -12,6 +12,15 @@ Se llega desde *Anuncios → N Comentarios* (modo demo: "Entrar como Estudiante"
 | `capturas/antes_original/` | Pantalla original (commit `d8f9edb`) en las 6 pruebas, más una con el teclado abierto |
 | `capturas/despues_mejorado/` | Pantalla con las mejoras en las mismas 6 pruebas y con el teclado abierto |
 | `comparativas/` | Imágenes antes → después con recuadros y flechas numeradas que señalan cada cambio |
+| `codigo_mejorado/` | Los 4 archivos modificados (misma ruta que en el proyecto) y `cambios.patch` con el detalle exacto |
+
+Para aplicar las mejoras sobre el proyecto original, desde la raíz del repo:
+
+```bash
+git apply Actividad-Analisis-y-Mejora-de-Interfaces-Moviles/codigo_mejorado/cambios.patch
+```
+
+o copiar los archivos de `codigo_mejorado/AlertaUNI/...` encima de los del proyecto.
 
 ## Escenarios de prueba
 
