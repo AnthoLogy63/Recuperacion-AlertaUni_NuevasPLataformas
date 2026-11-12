@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin / IDE
+.kotlin/
+.idea/
+pglite-debug.log
