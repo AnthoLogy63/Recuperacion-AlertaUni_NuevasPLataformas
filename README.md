@@ -2,6 +2,8 @@
 
 Implementación en Jetpack Compose (MVVM) del diseño propuesto en el Examen 2 (Alternativa B del Problema 1 y Alternativa B del Problema 2), sobre la aplicación AlertaUNI entregada por el docente. Código en [`/AlertaUNI`](../AlertaUNI) (rama `proy02-implementacion`).
 
+> Informe con comparativas antes/después y el código de cada cambio: [`informe/INFORME_PROYECTO_2.md`](informe/INFORME_PROYECTO_2.md)
+
 ## Qué se implementó
 
 | Tarea | Implementación | Archivos principales |
