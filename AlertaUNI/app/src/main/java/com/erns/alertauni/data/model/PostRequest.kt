@@ -8,5 +8,6 @@ data class PostRequest(
     val title: String,
     val content: String,
     val is_private: Boolean,
-    val allow_comments: Boolean
+    val allow_comments: Boolean,
+    val priority: String = "medium"
 )

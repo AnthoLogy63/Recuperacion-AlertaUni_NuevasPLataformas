@@ -56,7 +56,7 @@ import com.erns.alertauni.ui.theme.MySurfaceColor
 @Composable
 fun AddPostDialog(
     onDismiss: () -> Unit,
-    onClickNewPost: (String, String, String, String, String) -> Unit,
+    onClickNewPost: (String, String, String, String, String, String) -> Unit,
     catalogCourses: List<CatalogCourseEntity>
 ) {
     val courseCatalogSelected = remember { mutableStateOf<CatalogCourseEntity?>(null) }
@@ -64,6 +64,7 @@ fun AddPostDialog(
     val contentPost = remember { mutableStateOf("") }
     val opcionSeleccionada = remember { mutableStateOf("") }
     val maxWords = 280
+    val priority = remember { mutableStateOf("medium") }
 
     val onClickSelectCourse: (CatalogCourseEntity) -> Unit = { catalog ->
         courseCatalogSelected.value = catalog
@@ -224,6 +225,7 @@ fun AddPostDialog(
                         fontSize = 12.sp,
                         color = MyMutedForegroundColor
                     )
+                    com.erns.alertauni.screen.proposal.PriorityChips(priority.value) { priority.value = it }
                 }
             }
         },
@@ -254,7 +256,8 @@ fun AddPostDialog(
                                 courseCatalogSelected.value!!.courseCode,
                                 courseCatalogSelected.value!!.courseName,
                                 titlePost.value,
-                                contentPost.value
+                                contentPost.value,
+                                priority.value
                             )
                         }
                     },

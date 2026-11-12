@@ -36,6 +36,21 @@ class PostViewModel @Inject constructor(
     private val _catalogCourses = MutableStateFlow<List<CatalogCourseEntity>>(emptyList())
     val catalogCourses: StateFlow<List<CatalogCourseEntity>> = _catalogCourses
 
+    // Criterios de busqueda y filtros (estado de la pantalla; sobreviven a la navegacion)
+    private val _query = MutableStateFlow(com.erns.alertauni.screen.proposal.ProposalConfig.p2Query)
+    val query: StateFlow<String> = _query
+    private val _course = MutableStateFlow(com.erns.alertauni.screen.proposal.ProposalConfig.p2Course)
+    val course: StateFlow<String> = _course
+    private val _vis = MutableStateFlow(com.erns.alertauni.screen.proposal.ProposalConfig.p2Vis)
+    val vis: StateFlow<String> = _vis
+    private val _sort = MutableStateFlow(com.erns.alertauni.screen.proposal.ProposalConfig.p2Sort)
+    val sort: StateFlow<String> = _sort
+    fun setQuery(v: String) { _query.value = v }
+    fun setCourse(v: String) { _course.value = v }
+    fun setVis(v: String) { _vis.value = v }
+    fun setSort(v: String) { _sort.value = v }
+    fun clearFilters() { _query.value = ""; _course.value = ""; _vis.value = "all"; _sort.value = "recent" }
+
     private val _username = MutableStateFlow("")
     val username: StateFlow<String> = _username
 
@@ -50,6 +65,8 @@ class PostViewModel @Inject constructor(
             _username.value = dataStoreHelper.getFirstname() + " " + dataStoreHelper.getSurname()
         }
     }
+
+    fun refresh() = getPost()
 
     private fun getPost() {
         viewModelScope.launch {
@@ -73,7 +90,8 @@ class PostViewModel @Inject constructor(
     fun sendPost(
         courseCatalogId: String,
         titlePost: String,
-        contentPost: String
+        contentPost: String,
+        priority: String = "medium"
     ) {
         viewModelScope.launch {
             val postRequest = PostRequest(
@@ -81,11 +99,13 @@ class PostViewModel @Inject constructor(
                 title = titlePost,
                 content = contentPost,
                 is_private = false,
-                allow_comments = true
+                allow_comments = true,
+                priority = priority
             )
 
             repository.sendPost(postRequest).onSuccess { postAddResponse ->
                 _postState.value = PostState.Saved
+                getPost()
 
             }.onFailure {
                 Log.d(TAG, it.message.toString())

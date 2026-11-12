@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.erns.alertauni.data.model.DraftEntity
 import com.erns.alertauni.data.model.NotificacionEntity
 
-@Database(entities = [NotificacionEntity::class], version = 2)
+@Database(entities = [NotificacionEntity::class, DraftEntity::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificacionDao(): NotificacionDao
+    abstract fun draftDao(): DraftDao
 
     companion object {
         @Volatile
@@ -21,7 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "notificaciones-db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

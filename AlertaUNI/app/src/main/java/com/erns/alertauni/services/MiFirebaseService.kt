@@ -82,7 +82,7 @@ class MiFirebaseService : FirebaseMessagingService() {
     }
 
     private fun saveNotificationToDatabase(cursoId: String, mensaje: String, fechaHora: String) {
-        val db = Room.databaseBuilder(this, AppDatabase::class.java, "notificaciones-db").build()
+        val db = Room.databaseBuilder(this, AppDatabase::class.java, "notificaciones-db").fallbackToDestructiveMigration().build()
         val dao = db.notificacionDao()
 
         val notificacionEntity = NotificacionEntity(

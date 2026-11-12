@@ -49,6 +49,8 @@ import com.erns.alertauni.ui.theme.MyMutedForegroundColor
 import com.erns.alertauni.ui.theme.MyPrimaryColor
 import com.erns.alertauni.ui.theme.MySecondaryColor
 import com.erns.alertauni.ui.theme.MySurfaceColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.filled.Lock
 import kotlinx.coroutines.launch
 
 @Composable
@@ -73,14 +75,42 @@ fun PostScreen(
         }
     }
 
-    val onClickNewPost: (String, String, String, String, String) -> Unit =
-        { courseCatalogId, courseCode, courseName, titlePost, contentPost ->
+    val onClickNewPost: (String, String, String, String, String, String) -> Unit =
+        { courseCatalogId, courseCode, courseName, titlePost, contentPost, priority ->
             showAddDialog.value = false
             postViewModel.sendPost(
                 courseCatalogId,
                 titlePost,
-                contentPost
+                contentPost,
+                priority
             )
+        }
+
+    // --- Propuesta (Examen 2): formulario unico / FAB desplegable
+    val contactVm: com.erns.alertauni.screen.contact.ContactViewModel = hiltViewModel()
+    val students = contactVm.students.collectAsState()
+    val variant = com.erns.alertauni.screen.proposal.ProposalConfig.variant
+    val draftVm: DraftViewModel = hiltViewModel()
+    val drafts = draftVm.drafts.collectAsState()
+    val editingDraft = remember { mutableStateOf<com.erns.alertauni.data.model.DraftEntity?>(null) }
+    val cForm = com.erns.alertauni.screen.proposal.ProposalConfig.cForm
+    LaunchedEffect(Unit) { postViewModel.refresh() }
+    val publishToStudent: (com.erns.alertauni.data.model.CatalogCourseEntity, com.erns.alertauni.data.model.StudentEntity, String, String, String) -> Unit =
+        { c, s, pr, t, ct ->
+            showAddDialog.value = false
+            com.erns.alertauni.screen.proposal.ProposalConfig.cForm = null
+            editingDraft.value?.let { draftVm.delete(it.id) }; editingDraft.value = null
+            contactVm.addPostPrivate(
+                com.erns.alertauni.data.model.PostPrivateRequest(c.id, t, ct, s.student_id, true, pr)
+            )
+            scope.launch { kotlinx.coroutines.delay(400); postViewModel.refresh() }
+        }
+    val publishToCourse: (com.erns.alertauni.data.model.CatalogCourseEntity, String, String, String) -> Unit =
+        { c, pr, t, ct ->
+            showAddDialog.value = false
+            com.erns.alertauni.screen.proposal.ProposalConfig.cForm = null
+            editingDraft.value?.let { draftVm.delete(it.id) }; editingDraft.value = null
+            postViewModel.sendPost(c.id, t, ct, pr)
         }
 
     val onClickFloatingActionButton: () -> Unit = {
@@ -97,7 +127,23 @@ fun PostScreen(
 
     onFabActionReady(onClickFloatingActionButton)
 
-    if (showAddDialog.value && catalogCourseState.value.isNotEmpty()) {
+    if ((showAddDialog.value && variant == "B") || (cForm != null && variant == "C")) {
+        com.erns.alertauni.screen.proposal.NewAnnouncementSheet(
+            courses = catalogCourseState.value,
+            loadStudents = { id -> contactVm.getStudentByCourse(com.erns.alertauni.data.model.CourseCatalogRequest(id)) },
+            students = students.value,
+            lockedAudience = if (variant == "C") cForm else null,
+            draft = editingDraft.value,
+            onSaveDraft = { draftVm.save(it) },
+            onDismiss = {
+                editingDraft.value = null
+                showAddDialog.value = false
+                com.erns.alertauni.screen.proposal.ProposalConfig.cForm = null
+            },
+            onPublishCourse = publishToCourse,
+            onPublishStudent = publishToStudent
+        )
+    } else if (showAddDialog.value && variant == "A" && catalogCourseState.value.isNotEmpty()) {
         AddPostDialog(
             onDismiss = { showAddDialog.value = false },
             onClickNewPost = onClickNewPost,
@@ -105,6 +151,20 @@ fun PostScreen(
         )
     }
 
+    if (com.erns.alertauni.screen.proposal.ProposalConfig.p2 != null) {
+        com.erns.alertauni.screen.proposal.Problem2Board(
+            variant = com.erns.alertauni.screen.proposal.ProposalConfig.p2!!,
+            username = username.value,
+            posts = announcementState.value,
+            courses = catalogCourseState.value,
+            vm = postViewModel,
+            drafts = drafts.value,
+            onOpenDraft = { editingDraft.value = it; showAddDialog.value = true },
+            onDeleteDraft = { draftVm.delete(it.id) },
+            onClickComment = onClickComment
+        )
+        return
+    }
     BoardLayout(
         username.value,
         "Anuncios",
@@ -193,14 +253,29 @@ fun MessageCard(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                     Icon(
-                        imageVector = Icons.Outlined.Person,
+                        imageVector = if (announce.isPrivate) Icons.Filled.Lock else Icons.Outlined.Person,
                         contentDescription = "",
+                        tint = if (announce.isPrivate) Color(0xFF6A1B9A) else androidx.compose.material3.LocalContentColor.current,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     Text(
                         text = if (announce.isPrivate) "Privado" else "Público",
-                        color = MyMutedForegroundColor,
+                        color = if (announce.isPrivate) Color(0xFF6A1B9A) else MyMutedForegroundColor,
+                        fontWeight = if (announce.isPrivate) FontWeight.Bold else FontWeight.Normal,
                         fontSize = 16.sp,
+                    )
+                    Text(
+                        text = com.erns.alertauni.screen.proposal.priorityLabel(announce.priority).uppercase(),
+                        color = com.erns.alertauni.screen.proposal.priorityColor(announce.priority),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .background(
+                                com.erns.alertauni.screen.proposal.priorityColor(announce.priority).copy(alpha = 0.15f),
+                                RoundedCornerShape(10.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }
                 Text(

@@ -1,6 +1,16 @@
 package com.erns.alertauni.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import com.erns.alertauni.screen.proposal.Audience
+import com.erns.alertauni.screen.proposal.ProposalConfig
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -100,8 +110,36 @@ fun MainMenuScreen(userType: String) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (currentDestination == RouteScreen.Posts.route ||
-                currentDestination == RouteMainMenu.Courses.route
+            if (ProposalConfig.variant == "C" && currentDestination == RouteScreen.Posts.route) {
+                // Alternativa C: FAB que se despliega en dos acciones
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (ProposalConfig.cMenuOpen) {
+                        ExtendedFloatingActionButton(
+                            onClick = { ProposalConfig.cMenuOpen = false; ProposalConfig.cForm = Audience.COURSE },
+                            icon = { Icon(Icons.Default.Email, null) },
+                            text = { Text("Anuncio al curso") }
+                        )
+                        ExtendedFloatingActionButton(
+                            onClick = { ProposalConfig.cMenuOpen = false; ProposalConfig.cForm = Audience.STUDENT },
+                            icon = { Icon(Icons.Default.Lock, null) },
+                            text = { Text("Mensaje a un estudiante") }
+                        )
+                    }
+                    FloatingActionButton(
+                        shape = CircleShape,
+                        onClick = { ProposalConfig.cMenuOpen = !ProposalConfig.cMenuOpen }
+                    ) {
+                        Icon(
+                            imageVector = if (ProposalConfig.cMenuOpen) Icons.Default.Close else Icons.Default.Add,
+                            contentDescription = "Add"
+                        )
+                    }
+                }
+            } else if (!ProposalConfig.hideFab && (currentDestination == RouteScreen.Posts.route ||
+                currentDestination == RouteMainMenu.Courses.route)
             ) {
                 FloatingActionButton(
                     shape = CircleShape,

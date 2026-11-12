@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,8 +72,8 @@ fun TeacherContactScreen(
         }
     }
 
-    val onClickNewPost: (String, String, String) -> Unit =
-        { studentId, titlePost, contentPost ->
+    val onClickNewPost: (String, String, String, String) -> Unit =
+        { studentId, titlePost, contentPost, priority ->
             showAddDialog.value = false
             viewModel.addPostPrivate(
                 PostPrivateRequest(
@@ -80,17 +81,32 @@ fun TeacherContactScreen(
                     titlePost,
                     contentPost,
                     studentId,
-                    true
+                    true,
+                    priority
                 )
             )
         }
+    val catalogVm: com.erns.alertauni.screen.post.PostViewModel = hiltViewModel()
+    val catalog = catalogVm.catalogCourses.collectAsState()
 
     val onClickAddComment: (StudentEntity) -> Unit = {
         studentSelected.value = it
         showAddDialog.value = true
     }
 
-    if (showAddDialog.value) {
+    if (showAddDialog.value && com.erns.alertauni.screen.proposal.ProposalConfig.variant == "B") {
+        // Alternativa B: el mismo formulario unico, abierto como atajo con el estudiante ya elegido
+        com.erns.alertauni.screen.proposal.NewAnnouncementSheet(
+            courses = catalog.value,
+            loadStudents = { id -> viewModel.getStudentByCourse(CourseCatalogRequest(id)) },
+            students = students.value,
+            initialCourseId = courseSelected.value,
+            initialStudent = studentSelected.value,
+            onDismiss = { showAddDialog.value = false },
+            onPublishCourse = { _, _, _, _ -> showAddDialog.value = false },
+            onPublishStudent = { c, s, pr, t, ct -> onClickNewPost(s.student_id, t, ct, pr) }
+        )
+    } else if (showAddDialog.value) {
         AddCommentPrivateDialog(
             onDismiss = { showAddDialog.value = false },
             studentSelected.value!!,

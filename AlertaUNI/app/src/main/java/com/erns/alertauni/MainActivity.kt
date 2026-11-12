@@ -38,6 +38,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        com.erns.alertauni.screen.proposal.ProposalConfig.variant = intent.getStringExtra("alt") ?: "B"
+        com.erns.alertauni.screen.proposal.ProposalConfig.apply {
+            p2 = intent.getStringExtra("p2") ?: "B"
+            p2Query = intent.getStringExtra("q") ?: ""
+            p2Course = intent.getStringExtra("course") ?: ""
+            p2Vis = intent.getStringExtra("vis") ?: "all"
+            p2Detail = intent.getIntExtra("detail", 0)
+            p2Adv = intent.getIntExtra("adv", 0)
+            p2Sort = intent.getStringExtra("sort") ?: "recent"
+            p2Search = intent.getBooleanExtra("search", false)
+        }
 
         setContent {
             AlertaUNITheme {

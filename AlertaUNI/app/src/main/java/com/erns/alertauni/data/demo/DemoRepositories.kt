@@ -56,27 +56,60 @@ class DemoStore @Inject constructor() {
 
     val posts = mutableListOf(
         PostEntity(
+            id = 7, authorName = "Dra. Rosa Quispe", authorType = 1, courseCode = "1703121",
+            courseName = "Ingeniería de Software",
+            title = "Observaciones del avance", content = "Revisé tu avance del proyecto. Falta incluir el diagrama de clases y las pruebas de la API. Corrige esos puntos y súbelo nuevamente antes de la próxima semana.",
+            allowComments = true, countComments = 1, isPrivate = true,
+            date = "30/09/2026", receiverPrivate = "Carlos Ríos", priority = "high"
+        ),
+        PostEntity(
+            id = 6, authorName = "Dr. Luis Mamani", authorType = 1, courseCode = "1703140",
+            courseName = "Base de Datos II",
+            title = "Práctica calificada 2", content = "La práctica calificada de normalización y consultas SQL será el jueves a las 10:00 en el laboratorio 3. Traer carné universitario.",
+            allowComments = true, countComments = 4, isPrivate = false,
+            date = "29/09/2026", receiverPrivate = "", priority = "medium"
+        ),
+        PostEntity(
+            id = 5, authorName = "Dra. Rosa Quispe", authorType = 1, courseCode = "1703121",
+            courseName = "Ingeniería de Software",
+            title = "Cambio de aula para la exposición final",
+            content = "Por mantenimiento del auditorio, la exposición final del proyecto se realizará en el aula B-204 del pabellón de Ingeniería. Cada grupo dispondrá de 15 minutos de exposición y 5 minutos de preguntas. Deben presentar el prototipo funcional, el informe en PDF y el repositorio actualizado. Llegar 10 minutos antes para probar los equipos y confirmar el orden de participación.",
+            allowComments = true, countComments = 5, isPrivate = false,
+            date = "28/09/2026", receiverPrivate = "", priority = "high"
+        ),
+        PostEntity(
             id = 3, authorName = "Dra. Rosa Quispe", authorType = 1, courseCode = "1703133",
             courseName = "Introducción al Desarrollo de Nuevas Plataformas",
             title = "Examen 1 - 2026B", content = "Recuerden revisar el enunciado y formar grupos de 4 personas.",
             allowComments = true, countComments = 2, isPrivate = false,
-            date = "27/09/2026", receiverPrivate = ""
+            date = "27/09/2026", receiverPrivate = "", priority = "high"
+        ),
+        PostEntity(
+            id = 4, authorName = "Dra. Rosa Quispe", authorType = 1, courseCode = "1703133",
+            courseName = "Introducción al Desarrollo de Nuevas Plataformas",
+            title = "Reunión de asesoría", content = "Te espero el lunes a las 15:00 en mi oficina para revisar tu parte del examen.",
+            allowComments = true, countComments = 0, isPrivate = true,
+            date = "26/09/2026", receiverPrivate = "Lucía Flores", priority = "medium"
         ),
         PostEntity(
             id = 2, authorName = "Dra. Rosa Quispe", authorType = 1, courseCode = "1703121",
             courseName = "Ingeniería de Software",
             title = "Entrega de avance", content = "El avance del proyecto se sube al aula virtual hasta el viernes.",
             allowComments = true, countComments = 1, isPrivate = false,
-            date = "25/09/2026", receiverPrivate = ""
+            date = "25/09/2026", receiverPrivate = "", priority = "medium"
         ),
         PostEntity(
             id = 1, authorName = "Dr. Luis Mamani", authorType = 1, courseCode = "1703140",
             courseName = "Base de Datos II",
             title = "Clase de repaso", content = "El sábado habrá clase de repaso en el laboratorio 3.",
             allowComments = true, countComments = 0, isPrivate = true,
-            date = "20/09/2026", receiverPrivate = "Ana Torres"
+            date = "20/09/2026", receiverPrivate = "Ana Torres", priority = "low"
         )
     )
+
+    init {
+        posts.addAll(generatedPosts())
+    }
 
     val comments = mutableMapOf(
         3 to mutableListOf(
@@ -99,7 +132,7 @@ class DemoStore @Inject constructor() {
         StudentEntity("cat-1", "s3", "20230003", "Lucía", "Flores", "lucia@unsa.edu.pe")
     )
 
-    var nextPostId = 4
+    var nextPostId = 1000
     var nextCommentId = 4
 
     fun enrollment(catalogId: String, code: String, name: String, group: String) = StudentEnrollment(
@@ -140,7 +173,7 @@ class FakePostRepository @Inject constructor(
                 authorType = 1, courseCode = course.courseCode, courseName = course.courseName,
                 title = postRequest.title, content = postRequest.content,
                 allowComments = postRequest.allow_comments, countComments = 0,
-                isPrivate = postRequest.is_private, date = "28/09/2026", receiverPrivate = ""
+                isPrivate = postRequest.is_private, date = "28/09/2026", receiverPrivate = "", priority = postRequest.priority
             )
         )
         return Result.success(PostAddResponse(id, "2026-09-28"))
@@ -229,7 +262,7 @@ class FakeAnnounceRepository @Inject constructor(
                 authorType = 1, courseCode = course.courseCode, courseName = course.courseName,
                 title = postPrivateRequest.title, content = postPrivateRequest.content,
                 allowComments = postPrivateRequest.allowComments, countComments = 0,
-                isPrivate = true, date = "28/09/2026", receiverPrivate = postPrivateRequest.receiverPrivate
+                isPrivate = true, date = "28/09/2026", receiverPrivate = store.students.firstOrNull { it.student_id == postPrivateRequest.receiverPrivate }?.let { "${it.firstname} ${it.surname}" } ?: postPrivateRequest.receiverPrivate, priority = postPrivateRequest.priority
             )
         )
         return Result.success(PostPrivateResponse("2026-09-28"))
@@ -237,4 +270,51 @@ class FakeAnnounceRepository @Inject constructor(
 
     override suspend fun addPostPublic(postRequest: PostRequest): Result<PostPrivateResponse> =
         Result.success(PostPrivateResponse("2026-09-28"))
+}
+
+
+/**
+ * DATOS DE PRUEBA (Proyecto Integrador, Parte 2): 36 anuncios generados + 7 base = 43.
+ * Varian curso, visibilidad, prioridad, fecha, titulo y extension del contenido.
+ */
+private fun generatedPosts(): List<PostEntity> {
+    val courses = listOf(
+        Triple("1703133", "Introducción al Desarrollo de Nuevas Plataformas", "Dra. Rosa Quispe"),
+        Triple("1703121", "Ingeniería de Software", "Dra. Rosa Quispe"),
+        Triple("1703140", "Base de Datos II", "Dr. Luis Mamani")
+    )
+    val titles = listOf(
+        "Aviso de laboratorio", "Material de la semana", "Cambio de horario", "Resultados de la práctica",
+        "Recordatorio de entrega", "Charla invitada", "Revisión de notas", "Consulta de dudas",
+        "Feriado y recuperación de clase", "Formación de grupos", "Rúbrica de evaluación", "Demostración del prototipo"
+    )
+    val short = listOf(
+        "Revisen el aula virtual antes de la próxima sesión.",
+        "La entrega se realiza hasta las 23:59 del día indicado.",
+        "Traer laptop con el entorno de desarrollo instalado."
+    )
+    val medium = listOf(
+        "Publiqué en el aula virtual el material de apoyo y los ejercicios de la semana. Revisen las diapositivas antes de la clase y traigan sus dudas por escrito.",
+        "Las notas de la última práctica ya están disponibles. Quien desee revisar su calificación puede acercarse en el horario de atención con su carné universitario."
+    )
+    val long = listOf(
+        "Se informa que la próxima sesión se desarrollará en modalidad mixta. Los grupos deberán presentar el avance del proyecto con el repositorio actualizado, el informe parcial en PDF y una demostración breve de las funcionalidades implementadas. Cada grupo dispondrá de diez minutos y se evaluará la claridad de la exposición, la calidad del código y el cumplimiento de la rúbrica publicada. Cualquier inconveniente debe comunicarse con anticipación.",
+        "Recuerden que la evaluación considerará tanto la implementación como la comprensión individual de cada integrante. Prepárense para responder preguntas sobre las decisiones de diseño, la arquitectura MVVM, el uso de Room para el almacenamiento local y las pruebas realizadas con usuarios ajenos al equipo. Lleven evidencias en capturas de pantalla."
+    )
+    val students = listOf("Ana Torres", "Carlos Ríos", "Lucía Flores")
+    val priorities = listOf("high", "medium", "low")
+    return (0 until 36).map { i ->
+        val c = courses[i % 3]
+        val body = when (i % 4) { 0 -> short[i % 3]; 1 -> medium[i % 2]; 2 -> long[i % 2]; else -> short[(i + 1) % 3] }
+        val priv = i % 3 == 1
+        val day = 1 + (i * 2) % 28
+        val month = 8 + (i / 14)           // agosto - octubre
+        PostEntity(
+            id = 8 + i, authorName = c.third, authorType = 1, courseCode = c.first, courseName = c.second,
+            title = titles[i % titles.size] + if (i >= titles.size) " (${i / titles.size + 1})" else "",
+            content = body, allowComments = true, countComments = (i * 3) % 7, isPrivate = priv,
+            date = "%02d/%02d/2026".format(day, month),
+            receiverPrivate = if (priv) students[i % 3] else "", priority = priorities[(i / 2) % 3]
+        )
+    }
 }

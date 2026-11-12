@@ -42,12 +42,13 @@ import com.erns.alertauni.ui.theme.MySurfaceColor
 fun AddCommentPrivateDialog(
     onDismiss: () -> Unit,
     studentEntity: StudentEntity,
-    onClickNewPost: (String, String, String) -> Unit
+    onClickNewPost: (String, String, String, String) -> Unit
 ) {
     val titlePost = remember { mutableStateOf("") }
     val contentPost = remember { mutableStateOf("") }
     val opcionSeleccionada = remember { mutableStateOf("") }
     val maxWords = 280
+    val priority = remember { mutableStateOf("medium") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -154,6 +155,7 @@ fun AddCommentPrivateDialog(
                         fontSize = 12.sp,
                         color = MyMutedForegroundColor
                     )
+                    com.erns.alertauni.screen.proposal.PriorityChips(priority.value) { priority.value = it }
                 }
             }
         },
@@ -182,7 +184,8 @@ fun AddCommentPrivateDialog(
                             onClickNewPost(
                                 studentEntity.student_id,
                                 titlePost.value,
-                                contentPost.value
+                                contentPost.value,
+                                priority.value
                             )
                         }
                     },
