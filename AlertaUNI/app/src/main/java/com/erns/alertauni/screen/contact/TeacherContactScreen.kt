@@ -1,6 +1,8 @@
+
 package com.erns.alertauni.screen.contact
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -66,9 +68,28 @@ fun TeacherContactScreen(
         }
     }
 
+    // Código antiguo
+    /*
     LaunchedEffect(courseSelected.value) {
         if (courseSelected.value != null) {
             viewModel.getStudentByCourse(CourseCatalogRequest(courseSelected.value))
+        }
+    }
+    */
+
+    // Código nuevo
+    LaunchedEffect(courseSelected.value) {
+        Log.d("LaunchedDemo", "LaunchedEffect ejecutado")
+
+        if (courseSelected.value != null) {
+            Log.d(
+                "LaunchedDemo",
+                "Consultando estudiantes del curso: ${courseSelected.value}"
+            )
+
+            viewModel.getStudentByCourse(
+                CourseCatalogRequest(courseSelected.value)
+            )
         }
     }
 
