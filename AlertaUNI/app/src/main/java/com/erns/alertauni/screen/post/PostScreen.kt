@@ -181,9 +181,29 @@ fun PostScreen(
 
     if (com.erns.alertauni.screen.proposal.ProposalConfig.p2 != null) {
         Column(modifier = modifier.fillMaxSize()) {
-            WallRefreshBanner(refreshState.value) {
-                postViewModel.refresh(showFeedback = true)
-            }
+            // =====================================================================================
+            // ESTUDIANTE 4: rememberUpdatedState
+            // Al refrescar el muro, WallRefreshBanner inicia un temporizador de 4s para auto-ocultarse.
+            // Pasamos una lambda 'onDismiss' que captura el estado actual del ViewModel / pantalla.
+            // Si el usuario escribe en el buscador o interactúa con el muro durante esos 4 segundos,
+            // PostScreen se recompone y genera una nueva instancia de esta lambda.
+            // Gracias a 'rememberUpdatedState' dentro de WallRefreshBanner:
+            // 1) El temporizador de 4s NO se reinicia ante cada recomposición (no se interrumpe).
+            // 2) Al finalizar el tiempo, se ejecuta la versión MÁS RECIENTE de esta lambda.
+            // =====================================================================================
+            WallRefreshBanner(
+                state = refreshState.value,
+                onDismiss = {
+                    android.util.Log.d(
+                        "RememberUpdatedStateDemo",
+                        "[rememberUpdatedState] onDismiss ejecutado -> Ocultando banner. Búsqueda activa al expirar: '${postViewModel.query.value}'"
+                    )
+                    postViewModel.dismissWallRefresh()
+                },
+                onRetry = {
+                    postViewModel.refresh(showFeedback = true)
+                }
+            )
             Box(Modifier.weight(1f)) {
         com.erns.alertauni.screen.proposal.Problem2Board(
             variant = com.erns.alertauni.screen.proposal.ProposalConfig.p2!!,
