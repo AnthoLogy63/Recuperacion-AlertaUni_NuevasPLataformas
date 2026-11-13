@@ -71,6 +71,14 @@ class PostViewModel @Inject constructor(
     private val _wallRefresh = MutableStateFlow<WallRefreshState>(WallRefreshState.Idle)
     val wallRefresh: StateFlow<WallRefreshState> = _wallRefresh
 
+    // =========================================================================================
+    // ESTUDIANTE 4: rememberUpdatedState
+    // Restablece el estado del banner a Idle cuando el temporizador de auto-ocultado se completa.
+    // =========================================================================================
+    fun dismissWallRefresh() {
+        _wallRefresh.value = WallRefreshState.Idle
+    }
+
     private var refreshJob: kotlinx.coroutines.Job? = null
 
     fun refresh(showFeedback: Boolean = false) = getPost(showFeedback)
