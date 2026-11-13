@@ -32,6 +32,8 @@ class PostViewModel @Inject constructor(
     val postState: StateFlow<PostState> = _postState
     private val _announcements = MutableStateFlow<List<PostEntity>>(emptyList())
     val announcements: StateFlow<List<PostEntity>> = _announcements
+    private val _highlightedPostId = MutableStateFlow<Int?>(null)
+    val highlightedPostId: StateFlow<Int?> = _highlightedPostId
 
     private val _catalogCourses = MutableStateFlow<List<CatalogCourseEntity>>(emptyList())
     val catalogCourses: StateFlow<List<CatalogCourseEntity>> = _catalogCourses
@@ -66,13 +68,59 @@ class PostViewModel @Inject constructor(
         }
     }
 
-    fun refresh() = getPost()
+    private val _wallRefresh = MutableStateFlow<WallRefreshState>(WallRefreshState.Idle)
+    val wallRefresh: StateFlow<WallRefreshState> = _wallRefresh
 
-    private fun getPost() {
-        viewModelScope.launch {
+    private var refreshJob: kotlinx.coroutines.Job? = null
+
+    fun refresh(showFeedback: Boolean = false) = getPost(showFeedback)
+
+    // Entrada exclusiva del regreso al muro; reintentar no genera anuncios de prueba.
+    fun refreshAfterReturn() = getPost(showFeedback = true, simulateIncoming = true)
+
+    private fun getPost(showFeedback: Boolean = false, simulateIncoming: Boolean = false) {
+        if (showFeedback && refreshJob?.isActive == true) {
+            Log.d("MuroDisposableEffect", "REFRESCO OMITIDO: ya hay una consulta en curso")
+            return
+        }
+        refreshJob = viewModelScope.launch {
+            if (showFeedback) {
+                _wallRefresh.value = WallRefreshState.Loading
+                Log.d("MuroDisposableEffect", "REFRESCO INICIADO: consultando anuncios")
+            }
+            val previousIds = _announcements.value.mapTo(mutableSetOf()) { it.id }
+            var demoUpdate = false
+            var simulatedPostId: Int? = null
+            if (simulateIncoming &&
+                com.erns.alertauni.data.demo.DemoConfig.ENABLED &&
+                com.erns.alertauni.data.demo.DemoConfig.SIMULATE_INCOMING_POST_ON_RESUME &&
+                repository is com.erns.alertauni.data.demo.FakePostRepository
+            ) {
+                // Latencia simulada para observar el indicador de carga durante la exposición.
+                kotlinx.coroutines.delay(800)
+                val incoming = repository.simulateIncomingPost()
+                demoUpdate = true
+                simulatedPostId = incoming.id
+                Log.d("MuroDisposableEffect", "DEMO: anuncio de prueba ${incoming.id} incorporado al repositorio en memoria")
+            }
             repository.getPosts().onSuccess { posts ->
                 _announcements.value = posts
+                if (simulatedPostId != null) _highlightedPostId.value = simulatedPostId
+                if (showFeedback) {
+                    val newPosts = posts.count { it.id !in previousIds }
+                    _wallRefresh.value = WallRefreshState.Success(
+                        completedAt = System.currentTimeMillis(),
+                        newPosts = newPosts,
+                        isDemo = demoUpdate
+                    )
+                    Log.d("MuroDisposableEffect", "CAMBIO VISIBLE: $newPosts anuncios nuevos; total ${posts.size}")
+                    Log.d("MuroDisposableEffect", "REFRESCO COMPLETADO: ${posts.size} anuncios cargados")
+                }
             }.onFailure { exception ->
+                if (showFeedback) {
+                    _wallRefresh.value = WallRefreshState.Error
+                    Log.w("MuroDisposableEffect", "REFRESCO FALLIDO: no se pudieron actualizar los anuncios")
+                }
                 if (exception is BackendException) {
                     Log.d(
                         TAG,

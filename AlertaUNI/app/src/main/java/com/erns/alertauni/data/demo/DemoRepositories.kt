@@ -41,6 +41,8 @@ import javax.inject.Singleton
  */
 object DemoConfig {
     const val ENABLED = true
+    // Desactivar tras la exposición para volver al refresco normal del muro.
+    const val SIMULATE_INCOMING_POST_ON_RESUME = true
     const val EMAIL = "demo@alertauni.test"
     const val CODE_TO_FIND = "ABC123"
 }
@@ -177,6 +179,25 @@ class FakePostRepository @Inject constructor(
             )
         )
         return Result.success(PostAddResponse(id, "2026-09-28"))
+    }
+
+    /** Simula un anuncio recibido de otro docente; solo modifica los datos en memoria. */
+    fun simulateIncomingPost(): PostEntity {
+        val course = store.courses.first()
+        val id = store.nextPostId++
+        val now = java.util.Date()
+        val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(now)
+        val post = PostEntity(
+            id = id, authorName = "Docente de prueba", authorType = 1,
+            courseCode = course.courseCode, courseName = course.courseName,
+            title = "[DEMO] Nuevo anuncio recibido · $time",
+            content = "Anuncio de prueba #$id. Simula una publicación recibida mientras estabas fuera de la app y se incorpora al refrescar el muro al regresar.",
+            allowComments = true, countComments = 0, isPrivate = false,
+            date = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(now),
+            receiverPrivate = "", priority = "high"
+        )
+        store.posts.add(0, post)
+        return post
     }
 
     // Igual que PostRepositoryImpl: lista vacia => Failure("No posts found")

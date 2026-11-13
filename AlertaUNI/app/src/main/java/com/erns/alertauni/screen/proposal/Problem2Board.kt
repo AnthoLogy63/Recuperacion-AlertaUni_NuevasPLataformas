@@ -131,6 +131,7 @@ fun Problem2Board(
     val course by vm.course.collectAsState()
     val vis by vm.vis.collectAsState()
     val sort by vm.sort.collectAsState()
+    val highlightedPostId by vm.highlightedPostId.collectAsState()
     var showDrafts by remember { mutableStateOf(false) }
     var from by remember { mutableStateOf("") }
     var to by remember { mutableStateOf("") }
@@ -138,8 +139,9 @@ fun Problem2Board(
     var adv by remember { mutableStateOf(cfg.p2Adv) }
     var searchOpen by remember { mutableStateOf(cfg.p2Search || cfg.p2Query.isNotEmpty()) }
 
-    val filtered = remember(posts, query, course, vis, sort, from, to) {
+    val filtered = remember(posts, query, course, vis, sort, from, to, highlightedPostId) {
         applyCriteria(posts, query, course, vis, sort, from, to)
+            .sortedBy { it.id != highlightedPostId } // El último anuncio simulado se fija primero.
     }
     val setQuery: (String) -> Unit = vm::setQuery
     val setCourse: (String) -> Unit = vm::setCourse
@@ -172,7 +174,8 @@ fun Problem2Board(
             username, filtered, posts.size, query, course, vis, sort, courseOptions, courseLabel,
             onQuery = setQuery, onCourse = setCourse, onVis = setVis, onSort = setSort,
             onClear = clearAll, draftCount = drafts.size, onDrafts = { showDrafts = true },
-            onDetail = { detailId = it.id }, onComments = { onClickComment(it.id.toString()) }
+            onDetail = { detailId = it.id }, onComments = { onClickComment(it.id.toString()) },
+            highlightedPostId = highlightedPostId
         )
         else -> if (adv == 1) {
             AdvancedForm(
@@ -248,8 +251,15 @@ private fun AltB(
     courseOptions: List<Pair<String, String>>, courseLabel: (String) -> String,
     onQuery: (String) -> Unit, onCourse: (String) -> Unit, onVis: (String) -> Unit, onSort: (String) -> Unit,
     onClear: () -> Unit, draftCount: Int, onDrafts: () -> Unit,
-    onDetail: (PostEntity) -> Unit, onComments: (PostEntity) -> Unit
+    onDetail: (PostEntity) -> Unit, onComments: (PostEntity) -> Unit,
+    highlightedPostId: Int? = null
 ) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(highlightedPostId, list.firstOrNull()?.id) {
+        if (highlightedPostId != null && list.firstOrNull()?.id == highlightedPostId) {
+            listState.animateScrollToItem(0)
+        }
+    }
     var courseMenu by remember { mutableStateOf(false) }
     var sortMenu by remember { mutableStateOf(false) }
     val filtersActive = query.isNotBlank() || course.isNotEmpty() || vis != "all"
@@ -330,21 +340,26 @@ private fun AltB(
                 Button(onClick = onClear) { Text("Limpiar filtros") }
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 88.dp)) {
-                items(list, key = { it.id }) { CompactCard(it, onDetail, onComments) }
+            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 88.dp)) {
+                items(list, key = { it.id }) {
+                    CompactCard(it, onDetail, onComments, isNew = it.id == highlightedPostId)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun CompactCard(post: PostEntity, onDetail: (PostEntity) -> Unit, onComments: (PostEntity) -> Unit) {
+private fun CompactCard(post: PostEntity, onDetail: (PostEntity) -> Unit, onComments: (PostEntity) -> Unit, isNew: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 5.dp).clickable { onDetail(post) },
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = MySurfaceColor)
+        colors = CardDefaults.cardColors(containerColor = if (isNew) Color(0xFFE8F5E9) else MySurfaceColor)
     ) {
         Column(Modifier.padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 2.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (isNew) {
+                Text("NUEVO · DEMO · FIJADO AL INICIO", color = Color(0xFF1B5E20), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 CodeChip(post.courseCode)
                 VisibilityBadge(post.isPrivate)
@@ -423,6 +438,7 @@ private fun AdvancedForm(
     onFrom: (String) -> Unit, onTo: (String) -> Unit,
     onBack: () -> Unit, onApply: () -> Unit, onReset: () -> Unit
 ) {
+
     var courseMenu by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(MySurfaceColor)) {
         Row(Modifier.fillMaxWidth().background(MyPrimaryColor).padding(horizontal = 4.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {

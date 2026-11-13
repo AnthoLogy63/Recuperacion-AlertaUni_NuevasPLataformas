@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -62,6 +63,33 @@ fun PostScreen(
 ) {
     val context = LocalContext.current
     val postViewModel: PostViewModel = hiltViewModel()
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val refreshState = postViewModel.wallRefresh.collectAsState()
+
+    // El observador pertenece al muro y se retira al salir de su composición.
+    DisposableEffect(lifecycleOwner, postViewModel) {
+        var wasStopped = false
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> {
+                    wasStopped = true
+                    android.util.Log.d("MuroDisposableEffect", "ON_STOP: muro detenido; esperando regreso")
+                }
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> if (wasStopped) {
+                    wasStopped = false
+                    android.util.Log.d("MuroDisposableEffect", "ON_RESUME: regreso al muro; solicitando refresco")
+                    postViewModel.refreshAfterReturn()
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        android.util.Log.d("MuroDisposableEffect", "REGISTRADO: observador del ciclo de vida del muro")
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            android.util.Log.d("MuroDisposableEffect", "ELIMINADO: onDispose retiro el observador del muro")
+        }
+    }
     val scope = rememberCoroutineScope()
     val announcementState = postViewModel.announcements.collectAsState()
     val catalogCourseState = postViewModel.catalogCourses.collectAsState()
@@ -152,6 +180,11 @@ fun PostScreen(
     }
 
     if (com.erns.alertauni.screen.proposal.ProposalConfig.p2 != null) {
+        Column(modifier = modifier.fillMaxSize()) {
+            WallRefreshBanner(refreshState.value) {
+                postViewModel.refresh(showFeedback = true)
+            }
+            Box(Modifier.weight(1f)) {
         com.erns.alertauni.screen.proposal.Problem2Board(
             variant = com.erns.alertauni.screen.proposal.ProposalConfig.p2!!,
             username = username.value,
@@ -163,6 +196,8 @@ fun PostScreen(
             onDeleteDraft = { draftVm.delete(it.id) },
             onClickComment = onClickComment
         )
+            }
+        }
         return
     }
     BoardLayout(
