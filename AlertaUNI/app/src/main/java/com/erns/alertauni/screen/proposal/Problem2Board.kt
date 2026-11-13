@@ -1,5 +1,6 @@
 package com.erns.alertauni.screen.proposal
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +50,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -243,6 +245,28 @@ private fun AltA(
 }
 
 // ---------------------------------------------------------------- Alternativa B (elegida)
+// 1. Objeto singleton externo (fuera del control del árbol de Compose)
+object BoardTelemetryTracker {
+    var lastRenderedCount: Int = 0
+        private set
+    var lastActiveQuery: String = ""
+        private set
+    var totalRecompositions: Int = 0
+        private set
+
+    fun recordSuccessfulRender(renderedCount: Int, total: Int, query: String, course: String, vis: String) {
+        lastRenderedCount = renderedCount
+        lastActiveQuery = query
+        totalRecompositions++
+        Log.d(
+            "SideEffectDemo",
+            "[SideEffect] Recomposición EXITOSA #$totalRecompositions en AltB -> " +
+                    "Query: '$query' | Curso: '$course' | Visibilidad: '$vis' | " +
+                    "Renderizando $renderedCount de $total anuncios en pantalla"
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AltB(
@@ -266,6 +290,17 @@ private fun AltB(
     val chipColors = FilterChipDefaults.filterChipColors(
         selectedContainerColor = MySelectedColor, selectedLabelColor = MyPrimaryColor, selectedTrailingIconColor = MyPrimaryColor
     )
+
+    // SideEffect: Sincronización post-recomposición exitosa
+    SideEffect {
+        BoardTelemetryTracker.recordSuccessfulRender(
+            renderedCount = list.size,
+            total = total,
+            query = query,
+            course = course,
+            vis = vis
+        )
+    }
 
     Column(Modifier.fillMaxSize().background(MySecondaryColor)) {
         // Cabecera compacta
